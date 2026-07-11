@@ -58,7 +58,7 @@ com.liveklass.enrollment
 ```
 
 - `config`에는 QueryDSL, datasource routing, Clock 같은 애플리케이션 설정을 둔다.
-- `common`에는 여러 도메인에서 공유하는 기반 클래스와 공통 유틸리티를 둔다.
+- `common`에는 여러 도메인에서 공유하는 기반 클래스, 공통 예외, 공통 유틸리티를 둔다.
 - 도메인 entity는 각 도메인의 `domain` 패키지에 둔다.
 - 도메인 enum은 각 도메인의 `domain.enums` 패키지에 둔다.
 - 빈 디렉터리는 만들지 않고, 해당 계층 구현 시점에 패키지를 생성한다.

@@ -621,12 +621,13 @@ Migration 원칙:
 4. JPA repository와 QueryDSL query repository를 구현한다.
 5. datasource routing과 Clock 설정을 구현한다.
 6. 공통 예외 처리를 구현한다.
-7. outbox event 모델, repository, publisher 기본 흐름을 구현한다.
-8. Klass command/query service와 API를 구현한다.
-9. Enrollment command/query service와 API를 구현한다.
-10. facade와 optimistic lock 재시도를 구현한다.
+7. Klass command/read service를 구현한다.
+8. Enrollment command/read service와 optimistic lock 재시도를 구현한다.
+9. 도메인과 service 테스트를 작성한다.
+10. outbox event 모델, repository, publisher 기본 흐름을 구현한다.
 11. payment idempotency 모델과 결제 콜백 API를 구현한다.
-12. 도메인, 서비스, API, 동시성, outbox 테스트를 작성한다.
-13. README를 완성한다.
-14. 전체 테스트를 실행한다.
+12. command/read controller와 DTO를 구현한다.
+13. API, 동시성, outbox 테스트를 작성한다.
+14. README를 완성한다.
+15. 전체 테스트를 실행한다.
 ```
