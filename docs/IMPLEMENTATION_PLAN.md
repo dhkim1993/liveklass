@@ -16,13 +16,21 @@
 
 강의 엔티티를 `Class`로 만들면 Java 예약어와 충돌한다. `Lecture`, `CourseClass`, `Klass` 중 고민했고, 프로젝트명이 `liveklass`인 점과 코드에서 짧게 읽히는 점을 고려해 `Klass`로 정했다.
 
-### 2. 정원 차감 시점
+### 2. Klass와 Enrollment의 FK 처리
+
+운영 환경에서는 약한 결합을 위해 FK 없이 id 값만 저장하는 방식도 고려할 수 있다. 하지만 이번 과제에서는 `Klass`와 `Enrollment`가 같은 수강 신청 bounded context 안에 있고, 수강 신청은 반드시 하나의 강의에 속해야 한다.
+
+또한 신청 생성 시 `Klass.enrolledCount`를 증가시키고 `Enrollment`를 생성하는 작업이 같은 트랜잭션에서 처리된다. 따라서 두 엔티티의 관계를 DB 차원에서도 명확히 보장하는 것이 요구사항과 데이터 모델 설명에 더 적합하다고 판단했다.
+
+그래서 `Enrollment`는 `klass_id` FK를 통해 `Klass`와 연관관계를 갖도록 설계했다. 단, 불필요한 전파를 막기 위해 cascade는 사용하지 않고, 조회 성능을 위해 `FetchType.LAZY`를 사용한다.
+
+### 3. 정원 차감 시점
 
 정원을 결제 확정 시점에 차감하면 결제 대기 중인 사용자가 많을 때 마지막 결제 시점에 정원 초과가 발생할 수 있다. 사용자가 신청에 성공했는데 결제 확정에서 실패하는 흐름은 사용자 경험과 도메인 규칙이 복잡해진다.
 
 따라서 `PENDING` 신청 생성 시점에 정원을 점유하도록 정했다. `PENDING -> CONFIRMED`에서는 정원 변화가 없고, `PENDING/CONFIRMED -> CANCELLED`에서 정원을 복구한다.
 
-### 3. 동시성 제어 방식
+### 4. 동시성 제어 방식
 
 정원 초과를 막기 위해 비관적 락과 낙관적 락을 비교했다. 이번 과제는 수강 신청이라는 짧은 트랜잭션에서 같은 강의의 마지막 자리 경합을 처리하는 것이 핵심이므로, `Klass`에 `@Version`을 두는 낙관적 락을 선택했다.
 
@@ -30,53 +38,53 @@
 
 Redis 기반 분산락도 고려했지만, 별도 인프라와 락 만료/해제 실패 처리 부담이 생긴다. 이번 과제의 정원 관리는 단일 `Klass` aggregate의 `enrolledCount` 변경이므로 JPA `@Version` 기반 낙관적 락과 재시도를 기본 구현으로 선택했다. 다만 특정 인기 강의처럼 경합이 매우 큰 운영 환경에서는 Redis 분산락 또는 queue 기반 직렬 처리를 앞단에 추가해 요청을 직렬화할 수 있다. 이 경우에도 Redis 장애, lease time 만료, 락 해제 실패 같은 상황에 대비해 DB의 낙관적 락과 중복 신청 방지 제약은 최종 정합성 방어선으로 유지한다.
 
-### 4. CQRS 분리 수준
+### 5. CQRS 분리 수준
 
 과제 규모에서 완전한 이벤트 소싱 기반 CQRS는 과하다. 대신 controller, service, repository naming을 command/query로 분리하고, 쓰기 로직과 조회 로직의 책임을 나눠 가독성과 테스트 경계를 분명히 한다.
 
-### 5. H2에서 master/slave 라우팅
+### 6. H2에서 master/slave 라우팅
 
 H2는 실제 MySQL primary/replica 같은 복제 구성을 제공하지 않는다. 그래서 로컬 H2에서는 master datasource와 slave datasource가 같은 DB URL을 바라보게 하고, `@Transactional(readOnly = true)`에 따라 라우팅되는 구조만 검증한다.
 
 운영 환경에서는 master datasource를 MySQL primary에, slave datasource를 MySQL replica에 연결하는 것으로 확장한다.
 
-### 6. 결제 확정 API
+### 7. 결제 확정 API
 
 과제에서는 외부 결제 연동이 필수는 아니지만, 실제 서비스에서는 사용자가 직접 결제 확정 API를 호출하기보다 결제 시스템이 콜백을 보내는 구조가 일반적이다. 그래서 결제 확정은 사용자 API가 아니라 외부 결제 콜백 API로 분리한다.
 
 콜백은 네트워크 문제로 중복 전달될 수 있으므로 `Idempotency-Key`와 request hash를 저장해 같은 요청은 같은 응답을 반환하고, 같은 key로 다른 payload가 들어오면 충돌로 처리한다.
 
-### 7. 결제 콜백 request hash
+### 8. 결제 콜백 request hash
 
 `Idempotency-Key`만 저장하면 같은 key로 다른 payload가 들어오는 경우를 구분하기 어렵다. 그래서 `paymentId`, `enrollmentId`, `paidAmount`를 조합한 문자열의 SHA-256 값을 `requestHash`로 저장한다.
 
 SHA-256은 복호화하려는 목적이 아니라 요청 동일성 비교를 위한 fingerprint로 사용한다. 같은 요청이면 항상 같은 hash가 나오고, 금액이나 결제 식별자가 달라지면 다른 hash가 나오므로 같은 key의 잘못된 재사용을 감지할 수 있다.
 
-### 8. PG사가 Idempotency-Key를 제공하지 않는 경우
+### 9. PG사가 Idempotency-Key를 제공하지 않는 경우
 
 모든 PG사가 `Idempotency-Key` 헤더를 제공한다고 가정할 수는 없다. 이 경우에는 PG가 보장하는 고유 결제 식별자인 `paymentId`를 fallback key로 사용한다.
 
 구현에서는 `Idempotency-Key` 헤더가 있으면 우선 사용하고, 없으면 `"payment:" + paymentId`를 멱등성 key로 사용한다. 단, 이 정책은 `paymentId`가 PG 시스템 안에서 전역적으로 유일하고 변하지 않는다는 전제를 둔다.
 
-### 9. 시간 처리 방식
+### 10. 시간 처리 방식
 
 취소 가능 기간은 `confirmedAt` 기준 7일 이내, 강의 시작 전이라는 시간 기반 규칙을 가진다. 서비스 코드에서 `LocalDateTime.now()`를 직접 호출하면 테스트가 실제 현재 시간에 의존하게 된다.
 
 그래서 `Clock`을 주입해 운영에서는 실제 시간을 사용하고, 테스트에서는 고정된 시간을 주입해 경계값을 검증할 수 있도록 한다.
 
-### 10. LazyConnectionDataSourceProxy 사용 이유
+### 11. LazyConnectionDataSourceProxy 사용 이유
 
 read/write datasource 라우팅은 현재 트랜잭션의 `readOnly` 값을 기준으로 결정한다. 그런데 커넥션을 너무 일찍 가져오면 트랜잭션의 readOnly 정보가 확정되기 전에 datasource가 선택될 수 있다.
 
 이를 피하기 위해 `LazyConnectionDataSourceProxy`로 실제 커넥션 획득 시점을 늦춘다. 이렇게 하면 `@Transactional(readOnly = true)`가 적용된 query service는 slave datasource로, 일반 command service는 master datasource로 라우팅되는 구조를 안정적으로 검증할 수 있다.
 
-### 11. Outbox 적용 범위
+### 12. Outbox 적용 범위
 
 상태 변경 후 알림, 정산, 메시지 발행 같은 후속 처리를 바로 외부 브로커에 보내면 DB 트랜잭션 성공과 메시지 발행 성공이 어긋날 수 있다. 이를 막기 위해 도메인 상태 변경과 outbox 저장을 같은 DB 트랜잭션에서 처리한다.
 
 이번 과제에서는 Kafka를 직접 붙이지 않고 DB outbox와 scheduler 기반 publisher까지만 구현한다. 운영 환경에서는 outbox relay가 Kafka 또는 RabbitMQ로 이벤트를 발행하는 구조를 고려했다고 README에 명시한다.
 
-### 12. AI 활용 범위
+### 13. AI 활용 범위
 
 AI는 요구사항 정리, 설계 대안 비교, 구현 계획 초안 작성에 활용했다. 최종 설계는 위 항목처럼 직접 판단한 기준에 따라 조정했고, 구현 후에는 테스트 코드와 실행 결과로 검증한다.
 
@@ -230,21 +238,27 @@ EnrollmentCommandService
 예상 패키지:
 
 ```text
-controller
-  command
-  query
-
-service
-  command
-  query
-
-repository
-  jpa
-  query
-
-domain
-exception
 config
+common
+klass
+  domain
+    enums
+  commandcontroller
+  commandservice
+  commandrepository
+  readcontroller
+  readservice
+  readrepository
+enrollment
+  domain
+    enums
+  commandcontroller
+  commandservice
+  commandrepository
+  readcontroller
+  readservice
+  readrepository
+exception
 ```
 
 Command service:

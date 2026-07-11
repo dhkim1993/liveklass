@@ -1,7 +1,7 @@
-package com.liveklass.domain.klass;
+package com.liveklass.klass.domain;
 
-import com.liveklass.domain.common.BaseTimeEntity;
-import com.liveklass.domain.klass.enums.KlassStatus;
+import com.liveklass.common.BaseTimeEntity;
+import com.liveklass.klass.domain.enums.KlassStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -137,5 +137,4 @@ public class Klass extends BaseTimeEntity {
 			throw new IllegalStateException("강의 생성자만 수행할 수 있는 작업입니다.");
 		}
 	}
-
 }

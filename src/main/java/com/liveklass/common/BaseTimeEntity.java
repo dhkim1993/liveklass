@@ -1,4 +1,4 @@
-package com.liveklass.domain.common;
+package com.liveklass.common;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
@@ -16,9 +16,9 @@ public abstract class BaseTimeEntity {
 
 	@CreatedDate
 	@Column(nullable = false, updatable = false)
-	private LocalDateTime createdDateTime;
+	private LocalDateTime createdAt;
 
 	@LastModifiedDate
 	@Column(nullable = false)
-	private LocalDateTime updatedDateTime;
+	private LocalDateTime updatedAt;
 }

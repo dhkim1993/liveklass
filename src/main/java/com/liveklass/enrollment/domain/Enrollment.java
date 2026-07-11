@@ -1,8 +1,8 @@
-package com.liveklass.domain.enrollment;
+package com.liveklass.enrollment.domain;
 
-import com.liveklass.domain.common.BaseTimeEntity;
-import com.liveklass.domain.enrollment.enums.EnrollmentStatus;
-import com.liveklass.domain.klass.Klass;
+import com.liveklass.common.BaseTimeEntity;
+import com.liveklass.enrollment.domain.enums.EnrollmentStatus;
+import com.liveklass.klass.domain.Klass;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

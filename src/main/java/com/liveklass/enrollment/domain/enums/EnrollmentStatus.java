@@ -1,4 +1,4 @@
-package com.liveklass.domain.enrollment.enums;
+package com.liveklass.enrollment.domain.enums;
 
 import java.util.Arrays;
 import java.util.Collections;
