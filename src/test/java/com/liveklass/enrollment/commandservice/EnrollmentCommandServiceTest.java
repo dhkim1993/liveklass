@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.liveklass.common.exception.ErrorCode;
 import com.liveklass.common.exception.LiveKlassException;
+import com.liveklass.common.outbox.domain.OutboxEvent;
+import com.liveklass.common.outbox.domain.enums.OutboxEventType;
+import com.liveklass.common.outbox.repository.OutboxEventRepository;
 import com.liveklass.enrollment.commandrepository.EnrollmentRepository;
 import com.liveklass.enrollment.domain.Enrollment;
 import com.liveklass.enrollment.domain.enums.EnrollmentStatus;
@@ -47,8 +50,12 @@ class EnrollmentCommandServiceTest {
 	@Autowired
 	private EnrollmentRepository enrollmentRepository;
 
+	@Autowired
+	private OutboxEventRepository outboxEventRepository;
+
 	@BeforeEach
 	void setUp() {
+		outboxEventRepository.deleteAll();
 		enrollmentRepository.deleteAll();
 		klassRepository.deleteAll();
 	}
@@ -64,6 +71,10 @@ class EnrollmentCommandServiceTest {
 		assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.PENDING);
 		assertThat(enrollment.getUserId()).isEqualTo(USER_ID);
 		assertThat(klass.getEnrolledCount()).isEqualTo(1);
+
+		assertThat(outboxEventRepository.findAll())
+			.extracting(OutboxEvent::getEventType)
+			.containsExactly(OutboxEventType.ENROLLMENT_CREATED);
 	}
 
 	@Test
@@ -100,6 +111,13 @@ class EnrollmentCommandServiceTest {
 		assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.CANCELLED);
 		assertThat(enrollment.getCancelledAt()).isEqualTo(FIXED_NOW);
 		assertThat(klass.getEnrolledCount()).isZero();
+
+		assertThat(outboxEventRepository.findAll())
+			.extracting(OutboxEvent::getEventType)
+			.containsExactlyInAnyOrder(
+				OutboxEventType.ENROLLMENT_CREATED,
+				OutboxEventType.ENROLLMENT_CANCELLED
+			);
 	}
 
 	@Test

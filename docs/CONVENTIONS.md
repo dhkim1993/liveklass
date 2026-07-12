@@ -66,12 +66,26 @@ com.liveklass.enrollment
 ```
 
 - `config`에는 QueryDSL, datasource routing, Clock 같은 애플리케이션 설정을 둔다.
-- `common`에는 여러 도메인에서 공유하는 기반 클래스, 공통 예외, 공통 유틸리티를 둔다.
+- `common`에는 여러 도메인에서 공유하는 기반 클래스, 공통 예외, 공통 유틸리티, outbox 같은 공통 인프라를 둔다.
 - 도메인 entity는 각 도메인의 `domain` 패키지에 둔다.
 - 도메인 enum은 각 도메인의 `domain.enums` 패키지에 둔다.
 - facade가 필요한 경우 service 패키지에 섞지 않고 도메인별 `facade` 패키지로 분리한다.
 - facade는 재시도, 여러 service 조합, 외부 시스템 호출 흐름처럼 service 트랜잭션 경계 바깥에서 조율해야 하는 로직을 담당한다.
 - 빈 디렉터리는 만들지 않고, 해당 계층 구현 시점에 패키지를 생성한다.
+
+공통 outbox는 아래 구조를 사용한다.
+
+```text
+com.liveklass.common.outbox
+  domain
+    enums
+  repository
+  service
+```
+
+- 도메인 변경과 outbox event 저장은 같은 command transaction 안에서 처리한다.
+- 로컬 구현의 publisher는 외부 브로커 대신 발행 성공/실패 상태 전이만 담당한다.
+- 운영 환경에서는 outbox relay가 Kafka 또는 RabbitMQ로 이벤트를 발행하는 구조를 고려한다.
 
 ## Index
 
