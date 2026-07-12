@@ -1,12 +1,12 @@
 package com.liveklass.enrollment.readrepository;
 
-import com.liveklass.enrollment.domain.Enrollment;
+import com.liveklass.enrollment.readservice.EnrollmentDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface EnrollmentReadRepository {
 
-	Page<Enrollment> findByUserId(Long userId, Pageable pageable);
+	Page<EnrollmentDto> findByUserId(Long userId, Pageable pageable);
 
-	Page<Enrollment> findByKlassId(Long klassId, Pageable pageable);
+	Page<EnrollmentDto> findByKlassId(Long klassId, Pageable pageable);
 }

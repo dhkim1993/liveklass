@@ -3,6 +3,7 @@ package com.liveklass.enrollment.domain.enums;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -25,5 +26,11 @@ public enum EnrollmentStatus {
 			))
 	);
 
+	public static final List<EnrollmentStatus> ACTIVE_STATUSES = List.of(PENDING, CONFIRMED);
+
 	private final String label;
+
+	public boolean isActive() {
+		return ACTIVE_STATUSES.contains(this);
+	}
 }

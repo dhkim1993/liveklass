@@ -1,6 +1,8 @@
 package com.liveklass.klass.domain;
 
 import com.liveklass.common.BaseTimeEntity;
+import com.liveklass.common.exception.ErrorCode;
+import com.liveklass.common.exception.LiveKlassException;
 import com.liveklass.klass.domain.enums.KlassStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,7 +17,6 @@ import jakarta.persistence.Version;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -66,7 +67,6 @@ public class Klass extends BaseTimeEntity {
 	@Version
 	private Long version;
 
-	@Builder
 	private Klass(
 		Long creatorId,
 		String title,
@@ -101,40 +101,61 @@ public class Klass extends BaseTimeEntity {
 
 	public void open(Long requesterId) {
 		validateCreator(requesterId);
-		if (status != KlassStatus.DRAFT) {
-			throw new IllegalStateException("DRAFT 상태의 강의만 모집 시작할 수 있습니다.");
-		}
+		validateOpenable();
 		status = KlassStatus.OPEN;
 	}
 
 	public void close(Long requesterId) {
 		validateCreator(requesterId);
-		if (status == KlassStatus.CLOSED) {
-			throw new IllegalStateException("이미 모집 마감된 강의입니다.");
-		}
+		validateClosable();
 		status = KlassStatus.CLOSED;
 	}
 
-	public void occupyCapacity() {
-		if (status != KlassStatus.OPEN) {
-			throw new IllegalStateException("모집 중인 강의만 신청할 수 있습니다.");
-		}
-		if (enrolledCount >= capacity) {
-			throw new IllegalStateException("수강 정원을 초과할 수 없습니다.");
-		}
+	public void incrementCapacity() {
+		validateEnrollable();
 		enrolledCount++;
 	}
 
-	public void releaseCapacity() {
+	public void decrementCapacity() {
 		if (enrolledCount <= 0) {
-			throw new IllegalStateException("복구할 수강 정원이 없습니다.");
+			throw new LiveKlassException(ErrorCode.INVALID_REQUEST, "복구할 수강 정원이 없습니다.");
 		}
 		enrolledCount--;
 	}
 
 	public void validateCreator(Long requesterId) {
 		if (requesterId == null || !requesterId.equals(creatorId)) {
-			throw new IllegalStateException("강의 생성자만 수행할 수 있는 작업입니다.");
+			throw new LiveKlassException(ErrorCode.FORBIDDEN_KLASS_ACCESS);
+		}
+	}
+
+	private void validateOpenable() {
+		if (status == KlassStatus.OPEN) {
+			throw new LiveKlassException(ErrorCode.KLASS_ALREADY_OPEN);
+		}
+		if (status == KlassStatus.CLOSED) {
+			throw new LiveKlassException(ErrorCode.KLASS_ALREADY_CLOSED);
+		}
+		if (status != KlassStatus.DRAFT) {
+			throw new LiveKlassException(ErrorCode.KLASS_CANNOT_OPEN);
+		}
+	}
+
+	private void validateClosable() {
+		if (status == KlassStatus.CLOSED) {
+			throw new LiveKlassException(ErrorCode.KLASS_ALREADY_CLOSED);
+		}
+		if (status != KlassStatus.OPEN) {
+			throw new LiveKlassException(ErrorCode.KLASS_CANNOT_CLOSE);
+		}
+	}
+
+	public void validateEnrollable() {
+		if (status != KlassStatus.OPEN) {
+			throw new LiveKlassException(ErrorCode.KLASS_NOT_OPEN);
+		}
+		if (enrolledCount >= capacity) {
+			throw new LiveKlassException(ErrorCode.CAPACITY_EXCEEDED);
 		}
 	}
 }

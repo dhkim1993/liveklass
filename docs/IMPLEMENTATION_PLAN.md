@@ -38,53 +38,63 @@
 
 Redis 기반 분산락도 고려했지만, 별도 인프라와 락 만료/해제 실패 처리 부담이 생긴다. 이번 과제의 정원 관리는 단일 `Klass` aggregate의 `enrolledCount` 변경이므로 JPA `@Version` 기반 낙관적 락과 재시도를 기본 구현으로 선택했다. 다만 특정 인기 강의처럼 경합이 매우 큰 운영 환경에서는 Redis 분산락 또는 queue 기반 직렬 처리를 앞단에 추가해 요청을 직렬화할 수 있다. 이 경우에도 Redis 장애, lease time 만료, 락 해제 실패 같은 상황에 대비해 DB의 낙관적 락과 중복 신청 방지 제약은 최종 정합성 방어선으로 유지한다.
 
-### 5. CQRS 분리 수준
+### 5. Facade 재시도 구현 방식
+
+낙관적 락 재시도는 `enroll`처럼 반환값이 있는 작업과 `cancel`처럼 반환값이 없는 작업에 모두 필요하다. 처음에는 각 메서드에 retry loop를 직접 넣는 방식도 생각했지만, 같은 예외 처리와 최대 재시도 횟수 로직이 반복된다.
+
+그래서 facade에 제네릭 메서드인 `executeWithOptimisticLockRetry`를 두고, 실제 실행할 command를 함수형 인터페이스로 전달하도록 했다. 이 방식은 `Long`을 반환하는 신청 처리와 반환값이 없는 취소 처리를 하나의 재시도 로직으로 다룰 수 있다.
+
+`@FunctionalInterface`는 해당 인터페이스가 람다로 전달되는 단일 추상 메서드 인터페이스임을 명시하고, 나중에 메서드가 추가되어 람다 사용이 깨지는 것을 컴파일 단계에서 막기 위해 붙였다. Java 기본 `Supplier<T>`로도 대체할 수 있지만, 현재는 enrollment command 재시도용 작업이라는 의미를 드러내기 위해 전용 인터페이스를 사용한다.
+
+다만 코드 단순성을 더 우선한다면 `Supplier<T>`를 사용하거나, 반환값이 없는 command를 위한 별도 retry 메서드를 둘 수 있다. 현재 구현은 중복 제거와 의도 표현을 우선한 선택이다.
+
+### 6. CQRS 분리 수준
 
 과제 규모에서 완전한 이벤트 소싱 기반 CQRS는 과하다. 대신 controller, service, repository naming을 command/query로 분리하고, 쓰기 로직과 조회 로직의 책임을 나눠 가독성과 테스트 경계를 분명히 한다.
 
-### 6. H2에서 master/slave 라우팅
+### 7. H2에서 master/slave 라우팅
 
 H2는 실제 MySQL primary/replica 같은 복제 구성을 제공하지 않는다. 그래서 로컬 H2에서는 master datasource와 slave datasource가 같은 DB URL을 바라보게 하고, `@Transactional(readOnly = true)`에 따라 라우팅되는 구조만 검증한다.
 
 운영 환경에서는 master datasource를 MySQL primary에, slave datasource를 MySQL replica에 연결하는 것으로 확장한다.
 
-### 7. 결제 확정 API
+### 8. 결제 확정 API
 
 과제에서는 외부 결제 연동이 필수는 아니지만, 실제 서비스에서는 사용자가 직접 결제 확정 API를 호출하기보다 결제 시스템이 콜백을 보내는 구조가 일반적이다. 그래서 결제 확정은 사용자 API가 아니라 외부 결제 콜백 API로 분리한다.
 
 콜백은 네트워크 문제로 중복 전달될 수 있으므로 `Idempotency-Key`와 request hash를 저장해 같은 요청은 같은 응답을 반환하고, 같은 key로 다른 payload가 들어오면 충돌로 처리한다.
 
-### 8. 결제 콜백 request hash
+### 9. 결제 콜백 request hash
 
 `Idempotency-Key`만 저장하면 같은 key로 다른 payload가 들어오는 경우를 구분하기 어렵다. 그래서 `paymentId`, `enrollmentId`, `paidAmount`를 조합한 문자열의 SHA-256 값을 `requestHash`로 저장한다.
 
 SHA-256은 복호화하려는 목적이 아니라 요청 동일성 비교를 위한 fingerprint로 사용한다. 같은 요청이면 항상 같은 hash가 나오고, 금액이나 결제 식별자가 달라지면 다른 hash가 나오므로 같은 key의 잘못된 재사용을 감지할 수 있다.
 
-### 9. PG사가 Idempotency-Key를 제공하지 않는 경우
+### 10. PG사가 Idempotency-Key를 제공하지 않는 경우
 
 모든 PG사가 `Idempotency-Key` 헤더를 제공한다고 가정할 수는 없다. 이 경우에는 PG가 보장하는 고유 결제 식별자인 `paymentId`를 fallback key로 사용한다.
 
 구현에서는 `Idempotency-Key` 헤더가 있으면 우선 사용하고, 없으면 `"payment:" + paymentId`를 멱등성 key로 사용한다. 단, 이 정책은 `paymentId`가 PG 시스템 안에서 전역적으로 유일하고 변하지 않는다는 전제를 둔다.
 
-### 10. 시간 처리 방식
+### 11. 시간 처리 방식
 
 취소 가능 기간은 `confirmedAt` 기준 7일 이내, 강의 시작 전이라는 시간 기반 규칙을 가진다. 서비스 코드에서 `LocalDateTime.now()`를 직접 호출하면 테스트가 실제 현재 시간에 의존하게 된다.
 
 그래서 `Clock`을 주입해 운영에서는 실제 시간을 사용하고, 테스트에서는 고정된 시간을 주입해 경계값을 검증할 수 있도록 한다.
 
-### 11. LazyConnectionDataSourceProxy 사용 이유
+### 12. LazyConnectionDataSourceProxy 사용 이유
 
 read/write datasource 라우팅은 현재 트랜잭션의 `readOnly` 값을 기준으로 결정한다. 그런데 커넥션을 너무 일찍 가져오면 트랜잭션의 readOnly 정보가 확정되기 전에 datasource가 선택될 수 있다.
 
 이를 피하기 위해 `LazyConnectionDataSourceProxy`로 실제 커넥션 획득 시점을 늦춘다. 이렇게 하면 `@Transactional(readOnly = true)`가 적용된 query service는 slave datasource로, 일반 command service는 master datasource로 라우팅되는 구조를 안정적으로 검증할 수 있다.
 
-### 12. Outbox 적용 범위
+### 13. Outbox 적용 범위
 
 상태 변경 후 알림, 정산, 메시지 발행 같은 후속 처리를 바로 외부 브로커에 보내면 DB 트랜잭션 성공과 메시지 발행 성공이 어긋날 수 있다. 이를 막기 위해 도메인 상태 변경과 outbox 저장을 같은 DB 트랜잭션에서 처리한다.
 
 이번 과제에서는 Kafka를 직접 붙이지 않고 DB outbox와 scheduler 기반 publisher까지만 구현한다. 운영 환경에서는 outbox relay가 Kafka 또는 RabbitMQ로 이벤트를 발행하는 구조를 고려했다고 README에 명시한다.
 
-### 13. AI 활용 범위
+### 14. AI 활용 범위
 
 AI는 요구사항 정리, 설계 대안 비교, 구현 계획 초안 작성에 활용했다. 최종 설계는 위 항목처럼 직접 판단한 기준에 따라 조정했고, 구현 후에는 테스트 코드와 실행 결과로 검증한다.
 

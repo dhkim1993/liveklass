@@ -14,6 +14,8 @@ public enum ErrorCode {
 	KLASS_NOT_OPEN(HttpStatus.CONFLICT, "모집 중인 강의만 신청할 수 있습니다."),
 	KLASS_ALREADY_OPEN(HttpStatus.CONFLICT, "이미 모집 중인 강의입니다."),
 	KLASS_ALREADY_CLOSED(HttpStatus.CONFLICT, "이미 모집 마감된 강의입니다."),
+	KLASS_CANNOT_OPEN(HttpStatus.CONFLICT, "초안 상태의 강의만 모집 시작할 수 있습니다."),
+	KLASS_CANNOT_CLOSE(HttpStatus.CONFLICT, "모집 중인 강의만 모집 마감할 수 있습니다."),
 	CAPACITY_EXCEEDED(HttpStatus.CONFLICT, "수강 정원을 초과할 수 없습니다."),
 	DUPLICATE_ACTIVE_ENROLLMENT(HttpStatus.CONFLICT, "이미 활성 상태의 수강 신청이 존재합니다."),
 	INVALID_ENROLLMENT_STATUS(HttpStatus.CONFLICT, "현재 신청 상태에서는 처리할 수 없습니다."),
