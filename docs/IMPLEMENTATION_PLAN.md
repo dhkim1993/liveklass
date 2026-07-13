@@ -250,24 +250,38 @@ EnrollmentCommandService
 ```text
 config
 common
+infrastructure
+  outbox
 klass
   domain
     enums
-  commandcontroller
-  commandservice
-  commandrepository
-  readcontroller
-  readservice
-  readrepository
+  command
+    controller
+    service
+    repository
+  read
+    controller
+    service
+    repository
 enrollment
   domain
     enums
-  commandcontroller
-  commandservice
-  commandrepository
-  readcontroller
-  readservice
-  readrepository
+  facade
+  command
+    controller
+    service
+    repository
+  read
+    controller
+    service
+    repository
+payment
+  domain
+    enums
+  command
+    controller
+    service
+    repository
 exception
 ```
 
