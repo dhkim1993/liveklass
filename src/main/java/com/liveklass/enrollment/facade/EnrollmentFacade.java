@@ -2,7 +2,7 @@ package com.liveklass.enrollment.facade;
 
 import com.liveklass.common.exception.ErrorCode;
 import com.liveklass.common.exception.LiveKlassException;
-import com.liveklass.enrollment.commandservice.EnrollmentCommandService;
+import com.liveklass.enrollment.command.service.EnrollmentCommandService;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;

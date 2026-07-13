@@ -10,9 +10,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.liveklass.enrollment.commandrepository.EnrollmentRepository;
-import com.liveklass.klass.commandcontroller.request.CreateKlassRequest;
-import com.liveklass.klass.commandrepository.KlassRepository;
+import com.liveklass.enrollment.command.repository.EnrollmentRepository;
+import com.liveklass.klass.command.controller.request.CreateKlassRequest;
+import com.liveklass.klass.command.repository.KlassRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -121,7 +121,7 @@ class KlassControllerTest {
 		mockMvc.perform(get("/api/klasses/form"))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.DRAFT").value("초안"))
-			.andExpect(jsonPath("$.OPEN").value("모집 중"))
+			.andExpect(jsonPath("$.OPEN").value("모집 �?))
 			.andExpect(jsonPath("$.CLOSED").value("모집 마감"));
 	}
 

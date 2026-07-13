@@ -8,9 +8,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.liveklass.enrollment.commandrepository.EnrollmentRepository;
-import com.liveklass.klass.commandcontroller.request.CreateKlassRequest;
-import com.liveklass.klass.commandrepository.KlassRepository;
+import com.liveklass.enrollment.command.repository.EnrollmentRepository;
+import com.liveklass.klass.command.controller.request.CreateKlassRequest;
+import com.liveklass.klass.command.repository.KlassRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -85,7 +85,7 @@ class EnrollmentControllerTest {
 			.andExpect(jsonPath("$.content", hasSize(1)))
 			.andExpect(jsonPath("$.content[0].id").value(enrollmentId))
 			.andExpect(jsonPath("$.content[0].klassTitle").value("My list API"))
-			.andExpect(jsonPath("$.content[0].statusLabel").value("결제 대기"));
+			.andExpect(jsonPath("$.content[0].statusLabel").value("결제 ?��?));
 	}
 
 	@Test
@@ -113,9 +113,9 @@ class EnrollmentControllerTest {
 	void getFormReturnsEnrollmentStatusOptions() throws Exception {
 		mockMvc.perform(get("/api/enrollments/form"))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.PENDING").value("결제 대기"))
-			.andExpect(jsonPath("$.CONFIRMED").value("수강 확정"))
-			.andExpect(jsonPath("$.CANCELLED").value("취소됨"));
+			.andExpect(jsonPath("$.PENDING").value("결제 ?��?))
+			.andExpect(jsonPath("$.CONFIRMED").value("?�강 ?�정"))
+			.andExpect(jsonPath("$.CANCELLED").value("취소??));
 	}
 
 	private Long createOpenKlass(String title, int capacity) throws Exception {

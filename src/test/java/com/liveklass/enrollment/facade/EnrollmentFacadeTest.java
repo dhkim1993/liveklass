@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.liveklass.common.exception.ErrorCode;
 import com.liveklass.common.exception.LiveKlassException;
-import com.liveklass.enrollment.commandservice.EnrollmentCommandService;
+import com.liveklass.enrollment.command.service.EnrollmentCommandService;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.OptimisticLockingFailureException;
 

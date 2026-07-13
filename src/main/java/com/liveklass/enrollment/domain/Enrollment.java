@@ -55,15 +55,16 @@ public class Enrollment extends BaseTimeEntity {
         return new Enrollment(klass, userId);
     }
 
-    public void confirm(LocalDateTime confirmedAt) {
+    public boolean confirm(LocalDateTime confirmedAt) {
         if (status == EnrollmentStatus.CONFIRMED) {
-            return;
+            return false;
         }
         if (status != EnrollmentStatus.PENDING) {
             throw new LiveKlassException(ErrorCode.INVALID_ENROLLMENT_STATUS);
         }
         this.status = EnrollmentStatus.CONFIRMED;
         this.confirmedAt = confirmedAt;
+        return true;
     }
 
     public boolean cancel(LocalDateTime now) {
