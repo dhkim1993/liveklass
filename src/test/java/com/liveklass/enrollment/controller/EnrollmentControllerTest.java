@@ -85,7 +85,7 @@ class EnrollmentControllerTest {
 			.andExpect(jsonPath("$.content", hasSize(1)))
 			.andExpect(jsonPath("$.content[0].id").value(enrollmentId))
 			.andExpect(jsonPath("$.content[0].klassTitle").value("My list API"))
-			.andExpect(jsonPath("$.content[0].statusLabel").value("결제 ?��?));
+			.andExpect(jsonPath("$.content[0].statusLabel").value("결제 대기"));
 	}
 
 	@Test
@@ -113,9 +113,9 @@ class EnrollmentControllerTest {
 	void getFormReturnsEnrollmentStatusOptions() throws Exception {
 		mockMvc.perform(get("/api/enrollments/form"))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.PENDING").value("결제 ?��?))
-			.andExpect(jsonPath("$.CONFIRMED").value("?�강 ?�정"))
-			.andExpect(jsonPath("$.CANCELLED").value("취소??));
+			.andExpect(jsonPath("$.PENDING").value("결제 대기"))
+			.andExpect(jsonPath("$.CONFIRMED").value("수강 확정"))
+			.andExpect(jsonPath("$.CANCELLED").value("취소됨"));
 	}
 
 	private Long createOpenKlass(String title, int capacity) throws Exception {

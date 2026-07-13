@@ -39,7 +39,7 @@ public class OutboxEventService {
 		try {
 			return objectMapper.writeValueAsString(payload);
 		} catch (JsonProcessingException exception) {
-			throw new IllegalArgumentException("outbox payloadë¥?JSON?¼ë¡œ ë³€?˜í•  ???†ìŠµ?ˆë‹¤.", exception);
+			throw new IllegalArgumentException("Cannot serialize outbox payload to JSON.", exception);
 		}
 	}
 }

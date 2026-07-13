@@ -57,7 +57,7 @@ class EnrollmentReadServiceTest {
 		Page<EnrollmentDto> page = enrollmentReadService.getMyList(USER_ID, PageRequest.of(0, 10));
 
 		assertThat(page.getTotalElements()).isEqualTo(1);
-		EnrollmentDto dto = page.getContent().getFirst();
+		EnrollmentDto dto = page.getContent().get(0);
 		assertThat(dto.id()).isEqualTo(enrollmentId);
 		assertThat(dto.klassId()).isEqualTo(klassId);
 		assertThat(dto.klassTitle()).isEqualTo("My enrollment");

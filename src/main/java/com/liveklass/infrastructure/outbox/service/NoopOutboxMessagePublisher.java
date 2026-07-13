@@ -8,6 +8,5 @@ public class NoopOutboxMessagePublisher implements OutboxMessagePublisher {
 
 	@Override
 	public void publish(OutboxEvent outboxEvent) {
-		// ë¡œì»¬ êµ¬í˜„?ì„œ???¸ë? ë¸Œë¡œì»??€???±ê³µ ë°œí–‰ë§??œë??ˆì´?˜í•œ??
 	}
 }

@@ -121,7 +121,7 @@ class KlassControllerTest {
 		mockMvc.perform(get("/api/klasses/form"))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.DRAFT").value("초안"))
-			.andExpect(jsonPath("$.OPEN").value("모집 �?))
+			.andExpect(jsonPath("$.OPEN").value("모집 중"))
 			.andExpect(jsonPath("$.CLOSED").value("모집 마감"));
 	}
 

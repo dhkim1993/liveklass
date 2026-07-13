@@ -16,6 +16,8 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
             Collection<EnrollmentStatus> statuses
     );
 
+    long countByKlassIdAndStatusIn(Long klassId, Collection<EnrollmentStatus> statuses);
+
     default Enrollment getByIdOrThrow(Long id) {
         return findById(id).orElseThrow(() -> new LiveKlassException(ErrorCode.ENROLLMENT_NOT_FOUND));
     }

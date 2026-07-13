@@ -46,7 +46,7 @@ public record CreateKlassRequest(
 		);
 	}
 
-	@AssertTrue(message = "endDate??startDate ?´í›„?¬ì•¼ ?©ë‹ˆ??")
+	@AssertTrue(message = "endDate must be after startDate.")
 	public boolean isValidPeriod() {
 		return startDate == null || endDate == null || endDate.isAfter(startDate);
 	}
