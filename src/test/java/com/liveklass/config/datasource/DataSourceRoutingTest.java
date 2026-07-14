@@ -14,11 +14,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest(properties = {
-	"app.datasource.master.url=jdbc:h2:mem:routing_master;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+	"app.datasource.master.url=jdbc:h2:mem:routing_master;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
 	"app.datasource.master.username=sa",
 	"app.datasource.master.password=",
 	"app.datasource.master.driver-class-name=org.h2.Driver",
-	"app.datasource.slave.url=jdbc:h2:mem:routing_slave;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+	"app.datasource.slave.url=jdbc:h2:mem:routing_slave;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
 	"app.datasource.slave.username=sa",
 	"app.datasource.slave.password=",
 	"app.datasource.slave.driver-class-name=org.h2.Driver",
