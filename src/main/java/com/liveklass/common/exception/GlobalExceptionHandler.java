@@ -5,8 +5,10 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -56,6 +58,42 @@ public class GlobalExceptionHandler {
 				ErrorCode.INVALID_REQUEST,
 				ErrorCode.INVALID_REQUEST.getMessage(),
 				fieldErrors
+			));
+	}
+
+	@ExceptionHandler(MissingRequestHeaderException.class)
+	public ResponseEntity<ErrorResponse> handleMissingRequestHeaderException(
+		MissingRequestHeaderException exception
+	) {
+		FieldErrorResponse fieldError = new FieldErrorResponse(
+			exception.getHeaderName(),
+			"필수 요청 헤더가 누락되었습니다."
+		);
+
+		return ResponseEntity
+			.badRequest()
+			.body(ErrorResponse.withFieldErrors(
+				ErrorCode.INVALID_REQUEST,
+				ErrorCode.INVALID_REQUEST.getMessage(),
+				List.of(fieldError)
+			));
+	}
+
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(
+		MethodArgumentTypeMismatchException exception
+	) {
+		FieldErrorResponse fieldError = new FieldErrorResponse(
+			exception.getName(),
+			"요청 값의 타입이 올바르지 않습니다."
+		);
+
+		return ResponseEntity
+			.badRequest()
+			.body(ErrorResponse.withFieldErrors(
+				ErrorCode.INVALID_REQUEST,
+				ErrorCode.INVALID_REQUEST.getMessage(),
+				List.of(fieldError)
 			));
 	}
 

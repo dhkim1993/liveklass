@@ -80,6 +80,17 @@ class KlassControllerTest {
 	}
 
 	@Test
+	void createRejectsMissingUserIdHeader() throws Exception {
+		mockMvc.perform(post("/api/klasses")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(createRequest("Missing header"))))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+			.andExpect(jsonPath("$.fieldErrors[0].field").value(USER_ID_HEADER))
+			.andExpect(jsonPath("$.fieldErrors[0].message").value("필수 요청 헤더가 누락되었습니다."));
+	}
+
+	@Test
 	void openAndCloseKlass() throws Exception {
 		Long klassId = createKlass("Lifecycle");
 
